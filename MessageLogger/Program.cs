@@ -6,10 +6,14 @@ using Microsoft.EntityFrameworkCore;
 using (var context = new MessageLoggerContext())
 {
     welcomeUser();
-
-    User user = createUser();
     
-    context.Users.Add(user);
+    User user = createUser(context);
+
+    if (!context.Users.Contains(user))
+    {
+        context.Users.Add(user);
+    }
+    
     // PLAN FOR USER
 
     // Make a new user object by instating a new user object using 
@@ -34,7 +38,7 @@ using (var context = new MessageLoggerContext())
         while (userInput.ToLower() != "log out")
         {
             // Add the message from user input to message list 
-            Message messageToUse = new Message() { Content = userInput, CreatedAt = DateTime.Now.ToUniversalTime()};
+            Message messageToUse = new Message() { Content = userInput, CreatedAt = DateTime.Now.ToUniversalTime() };
 
             user.Messages.Add(messageToUse);
             context.Messages.Add(messageToUse); // I dont think this dose what I want it to, intending to add message to message table but no user attached
@@ -64,14 +68,14 @@ using (var context = new MessageLoggerContext())
         // If user wants to make a new profile
         if (userInput.ToLower() == "new")
         {
-             // Create New user and save to user var
-            user = createUser();
+            // Create New user and save to user var
+            user = createUser(context);
 
-             // Add user to user list
+            // Add user to user list
             users.Add(user);
             context.Users.Add(user);
 
-             // Ask user for message
+            // Ask user for message
             Console.Write("Add a message: ");
 
             // Get user input for message
@@ -137,8 +141,26 @@ static void welcomeUser()
     Console.WriteLine("Let's create a user pofile for you.");
 }
 
-static User createUser()
+static User createUser(MessageLoggerContext context)
 {
+    Console.WriteLine("Would you like to log into an existing user? Y for yes N for no");
+    string userInput = Console.ReadLine();
+
+    if(userInput.ToLower() == "y")
+    {
+        Console.Write("What is your username? ");
+        var existingUserName = Console.ReadLine();
+
+        foreach (var existingUser in context.Users)
+        {    // Update bellow to use context.existingUser.Username
+            if (existingUser.Username == existingUserName)
+            {   // If found set user(null rn) to existingUser with same username
+                return existingUser;
+            }
+        }
+
+        Console.WriteLine("Coult not find User, making new profile");
+    }
     // Asking user for name and saving to var name 
     Console.Write("What is your name? ");
     string name = Console.ReadLine();
