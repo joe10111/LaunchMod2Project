@@ -42,12 +42,14 @@ while (userInput.ToLower() != "quit")
         user.Messages.Add(new Message(userInput));
 
         // PLAN FOR MESSAGES
-        // Message is created above and added to users message list
-        // Take the new message being created and save it first before adding above
-        // Using the new object message var, add the new message to the conext of the message table
-        // save changes to the context
+         // Message is created above and added to users message list
+         // Take the new message being created and save it first before adding above
+         // Using the new object message var, add the new message to the conext of the message table
+         // save changes to the context
 
-         // Loop through user.Messages 
+        // PLAN FOR READING USERS
+         // Change forEach loop to use Context.User.Messages instead of users
+         // loop through table of users stored Messages to display message stats
         foreach (var message in user.Messages)
         {   // Display all messages
             Console.WriteLine($"{user.Name} {message.CreatedAt:t}: {message.Content}");
@@ -70,6 +72,7 @@ while (userInput.ToLower() != "quit")
          // Asking user for name and saving to name var 
         Console.Write("What is your name? ");
         name = Console.ReadLine();
+
          // Asking user for username and saving to username var 
         Console.Write("What is your username? (one word, no spaces!) ");
         username = Console.ReadLine();
@@ -96,9 +99,12 @@ while (userInput.ToLower() != "quit")
          // Set User to Null untill profile is found
         user = null;
 
-         // Loop through users in users list
+         // PLAN FOR READING USERS
+         // Change forEach loop to use Context.Users instead of users
+         // Loop through table of users
+
         foreach (var existingUser in users)
-        {    // Check if username is present in existing users
+        {    // Update bellow to use context.existingUser.Username
             if (existingUser.Username == username)
             {   // If found set user(null rn) to existingUser with same username
                 user = existingUser;
@@ -121,6 +127,9 @@ while (userInput.ToLower() != "quit")
 }
  // Output thank you message 
 Console.WriteLine("Thanks for using Message Logger!");
+
+ // PLAN FOR READING USERS
+ // Change forEach loop to use Context.Users instead of users to loop through table of users
 foreach (var u in users)
 { // Loop through users 
      // Display all messages a user wrote
