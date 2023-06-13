@@ -31,26 +31,29 @@ using (var context = new MessageLoggerContext())
         {
             // Add the message from user input to message list 
             Message messageToUse = new Message() { Content = userInput, CreatedAt = DateTime.Now.ToUniversalTime() };
+            
+            if(userInput.ToLower() == "quit")
+            {
+                break;
+            }
 
             user.Messages.Add(messageToUse);
             context.Messages.Add(messageToUse); 
             context.SaveChanges();
 
+            var userIncludingMessages = context.Users.Include(user => user.Messages).Where(cUser => cUser.Id == user.Id).Single();
 
-            foreach (var message in user.Messages)
-            {
-                Console.WriteLine($"{user.Name} {message.CreatedAt:t}: {message.Content}");
-            }
-
-            // save to prevent scope issues
-            // Prompt for message
+                foreach (var currentMessage in userIncludingMessages.Messages)
+                {
+                    Console.WriteLine($"{user.Name} {currentMessage.CreatedAt.ToLocalTime():t}: {currentMessage.Content}");
+                }
+               
             Console.Write("Add a message: ");
 
-            // Asking again for user input
             userInput = Console.ReadLine();
             Console.WriteLine();
         }
-        // If the user breaks out of above loop ask for new action
+
         Console.Write("Would you like to log in a `new` or `existing` user? Or, `quit`? ");
         userInput = Console.ReadLine();
 
@@ -79,15 +82,11 @@ using (var context = new MessageLoggerContext())
 
             // Set User to Null untill profile is found
             user = null;
-
-            // PLAN FOR READING USERS
-            // Change forEach loop to use Context.Users instead of users
-            // Loop through table of users
-
+            
             foreach (var existingUser in context.Users)
-            {    // Update bellow to use context.existingUser.Username
+            {   
                 if (existingUser.Username == username)
-                {   // If found set user(null rn) to existingUser with same username
+                {
                     user = existingUser;
                 }
             }
@@ -112,12 +111,12 @@ using (var context = new MessageLoggerContext())
 
     // PLAN FOR READING USERS
     // Change forEach loop to use Context.Users instead of users to loop through table of users
-    var usersToLoop = context.Users.Include(user => user.Messages);
 
+    var usersToLoop = context.Users.Include(user => user.Messages);
     foreach (var u in usersToLoop)
     { // Loop through users 
       // Display all messages a user wrote
-        Console.WriteLine($"{u.Name} wrote {u.Messages.Count} messages.");
+        Console.WriteLine($"{u.Name} has written {u.Messages.Count} messages.");
     }
 }
 
