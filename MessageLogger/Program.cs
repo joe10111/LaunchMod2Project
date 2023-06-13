@@ -2,6 +2,8 @@
 using MessageLogger.Models;
 using MessageLogger.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
 
 using (var context = new MessageLoggerContext())
 {
@@ -112,12 +114,7 @@ using (var context = new MessageLoggerContext())
     // PLAN FOR READING USERS
     // Change forEach loop to use Context.Users instead of users to loop through table of users
 
-    var usersToLoop = context.Users.Include(user => user.Messages);
-    foreach (var u in usersToLoop)
-    { // Loop through users 
-      // Display all messages a user wrote
-        Console.WriteLine($"{u.Name} has written {u.Messages.Count} messages.");
-    }
+    userStats(context);
 }
 
 static void welcomeUser()
@@ -160,4 +157,43 @@ static User createUser(MessageLoggerContext context)
     User user = new User() { Name = name, Username = username };
 
     return user;
+}
+
+static void userStats(MessageLoggerContext context)
+{
+    // 1. users ordered by number of messages created(most to least)
+    var usersToLoop = context.Users.Include(user => user.Messages).OrderByDescending(u => u.Messages.Count);
+
+    foreach (var u in usersToLoop)
+    { // Loop through users 
+      // Display all messages a user wrote
+        Console.WriteLine($"{u.Name} has written {u.Messages.Count} messages.");
+    }
+
+    // 2. most commonly used word for messages(by user and overall)
+    // start with new empty list
+    List<string> words = new List<string>();
+    // get all messages from every user
+    var uToLoop = context.Users.Include(user => user.Messages);
+
+    foreach (var u in uToLoop)
+    {
+        foreach (var message in u.Messages)
+        {   // split each message into a list of words
+            foreach (var word in message.Content.Split())
+            {   // add all the words into the empty list we made above
+                words.Add(word);
+            }
+        }
+    }
+
+    var MostCommonWords = words.GroupBy(x => x).Select(x => new { KeyFeild = x.Key, Count = x.Count() }).OrderByDescending(x => x.Count).Take(1);
+    
+    foreach (var item in MostCommonWords)
+    {
+        Console.WriteLine($"The most common word is: {item.KeyFeild} with {item.Count} times occuring");
+    }
+
+    // 3. the hour with the most messages
+    // 4. Brainstorm your own interesting statistic(s)!
 }
