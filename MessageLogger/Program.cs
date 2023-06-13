@@ -13,18 +13,10 @@ using (var context = new MessageLoggerContext())
     {
         context.Users.Add(user);
     }
-    
-    // PLAN FOR USER
-
-    // Make a new user object by instating a new user object using 
-    // Name and username from above input
-    // Save to context
-
+ 
     // Telling the user the text commands that allow them to log out or exit
-    Console.WriteLine();
-    Console.WriteLine("To log out of your user profile, enter `log out`.");
-    Console.WriteLine();
-    Console.Write("Add a message (or `quit` to exit): ");
+    Console.WriteLine("To log out of your user profile, enter `log out`. \n");
+    Console.Write("\n Add a message (or `quit` to exit): ");
 
     // Get user input for next action
     string userInput = Console.ReadLine();
@@ -41,19 +33,16 @@ using (var context = new MessageLoggerContext())
             Message messageToUse = new Message() { Content = userInput, CreatedAt = DateTime.Now.ToUniversalTime() };
 
             user.Messages.Add(messageToUse);
-            context.Messages.Add(messageToUse); // I dont think this dose what I want it to, intending to add message to message table but no user attached
+            context.Messages.Add(messageToUse); 
+            context.SaveChanges();
 
-            // PLAN FOR MESSAGES
-            // Message is created above and added to users message list
-            // Take the new message being created and save it first before adding above
-            // Using the new object message var, add the new message to the conext of the message table
-            // save changes to the context
 
             foreach (var message in user.Messages)
             {
                 Console.WriteLine($"{user.Name} {message.CreatedAt:t}: {message.Content}");
             }
 
+            // save to prevent scope issues
             // Prompt for message
             Console.Write("Add a message: ");
 
