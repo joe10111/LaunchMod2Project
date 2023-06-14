@@ -1,5 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
-using MessageLogger.Models;
+﻿using MessageLogger.Models;
 using MessageLogger.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -123,12 +122,7 @@ using (var context = new MessageLoggerContext())
 static void welcomeUser()
 {
     Console.WriteLine("Welcome to Message Logger!");
-    Console.WriteLine();
-
-    // Before doing the bellow line, check if any profiles exist in the users table
-    Console.WriteLine("Let's create a user pofile for you.");
 }
-
 static User createUser(MessageLoggerContext context)
 {
     Console.WriteLine("Would you like to log into an existing user? Y for yes N for no");
@@ -160,4 +154,97 @@ static User createUser(MessageLoggerContext context)
     User user = new User() { Name = name, Username = username };
 
     return user;
+}
+
+static void userStats(MessageLoggerContext context, List<User> users)
+{
+    // 1. users ordered by number of messages created(most to least)
+    var usersToLoop = context.Users.Include(user => user.Messages).OrderByDescending(u => u.Messages.Count);
+
+    foreach (var u in usersToLoop)
+    { // Loop through users 
+      // Display all messages a user wrote
+        Console.WriteLine($"{u.Name} has written {u.Messages.Count} messages.");
+    }
+
+    // 2. most commonly used word for messages(by user and overall)
+    // start with new empty list
+    List<string> words = new List<string>();
+  
+    // get all messages from every user
+    var uToLoop = context.Users.Include(user => user.Messages);
+
+    foreach (var u in uToLoop)
+    {
+        foreach (var message in u.Messages)
+        {   // split each message into a list of words
+            foreach (var word in message.Content.Split())
+            {   // add all the words into the empty list we made above
+                words.Add(word);
+            }
+        }
+    }
+
+    var MostCommonWords = words.GroupBy(x => x)
+                                .Select(x => new { word = x.Key, wordCount = x.Count() })
+                                .OrderByDescending(x => x.wordCount)
+                                .Take(1);
+
+    var LeastCommonWords = words.GroupBy(x => x)
+                                .Select(x => new { word = x.Key, wordCount = x.Count() })
+                                .OrderBy(x => x.wordCount)
+                                .Take(1);
+
+    foreach (var i in MostCommonWords)
+    {
+        Console.WriteLine($"The most common word is: {i.word} with {i.wordCount} times occuring");
+    }
+
+    foreach (var i in LeastCommonWords)
+    {
+        Console.WriteLine($"The Least common word is: {i.word} with {i.wordCount} times occuring");
+    }
+
+    var mostCommonWordsPerUser = context.Users
+        .Include(user => user.Messages)
+        .AsEnumerable()
+        .Select(user => new
+        {
+            User = user,
+            MostCommonWord = user.Messages
+                .SelectMany(message => message.Content.Split())
+                .GroupBy(word => word)
+                .Select(group => new { Word = group.Key, Count = group.Count() })
+                .OrderByDescending(group => group.Count)
+                .FirstOrDefault()
+        }).ToList();
+
+    foreach (var item in mostCommonWordsPerUser)
+    {
+        Console.WriteLine($"The most common word for the user: {item.User.Name} is: {item.MostCommonWord.Word} with {item.MostCommonWord.Count} times occuring");
+    }
+
+    // 3. the hour with the most messages
+    // Retrieve messages from the database:
+    var hourWithMostMessages = context.Messages
+         // - Use LINQ methods to extract the hour component from each CreatedAt value.
+        .GroupBy(messages => messages.CreatedAt.Hour)
+        // - Use select to make an anonymous type containing hour and count of messages
+        .Select(messageHourGroup => new
+        {    // make hour feild and set it equal to messageHourGroup.key
+            hour = messageHourGroup.Key,
+             // make messageCount feild and set it equal to messageHourGroup.Count()
+            messageCount = messageHourGroup.Count()
+        }).OrderByDescending(groupedData => groupedData.messageCount)
+        .FirstOrDefault();
+
+     // This line is required for formattedStringHour to work properly
+    TimeSpan hourAsTimeSpan = TimeSpan.FromHours(hourWithMostMessages.hour);
+
+    string formattedStringHour = hourAsTimeSpan.ToString("hh':'mm");
+
+    Console.WriteLine($"The hourWithMostMessages is: {formattedStringHour} with {hourWithMostMessages.messageCount} messages");
+
+    // 4. Brainstorm your own interesting statistic(s)!
+      
 }
