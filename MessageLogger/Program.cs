@@ -4,6 +4,7 @@ using MessageLogger.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
+using System.Globalization;
 
 using (var context = new MessageLoggerContext())
 {
@@ -222,11 +223,26 @@ static void userStats(MessageLoggerContext context, List<User> users)
         Console.WriteLine($"The most common word for the user: {item.User.Name} is: {item.MostCommonWord.Word} with {item.MostCommonWord.Count} times occuring");
     }
 
-    // Left off here not working just seeing what I could do, but I need to think more about it
     // 3. the hour with the most messages
+    // Retrieve messages from the database:
     var hourWithMostMessages = context.Messages
-        .Select(m => new { time = m.CreatedAt,  })
-                                .OrderByDescending(x => x)
-                                .Take(1);
+         // - Use LINQ methods to extract the hour component from each CreatedAt value.
+        .GroupBy(messages => messages.CreatedAt.Hour)
+        // - Use select to make an anonymous type containing hour and count of messages
+        .Select(messageHourGroup => new
+        {    // make hour feild and set it equal to messageHourGroup.key
+            hour = messageHourGroup.Key,
+             // make messageCount feild and set it equal to messageHourGroup.Count()
+            messageCount = messageHourGroup.Count()
+        }).OrderByDescending(groupedData => groupedData.messageCount)
+        .FirstOrDefault();
+
+     // This line is required for formattedStringHour to work properly
+    TimeSpan hourAsTimeSpan = TimeSpan.FromHours(hourWithMostMessages.hour);
+
+    string formattedStringHour = hourAsTimeSpan.ToString("hh':'mm");
+
+    Console.WriteLine($"The hourWithMostMessages is: {formattedStringHour} with {hourWithMostMessages.messageCount} messages");
+
     // 4. Brainstorm your own interesting statistic(s)!
 }
