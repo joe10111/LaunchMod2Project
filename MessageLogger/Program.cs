@@ -195,5 +195,8 @@ static void userStats(MessageLoggerContext context)
     }
 
     // 3. the hour with the most messages
+    var MostMessagesHour = context.Messages.GroupBy(x => x).Select(x => new { keyFeild = x.Key.Content, value = x.Key.CreatedAt.ToShortTimeString() }).OrderByDescending(x => x.value).Take(1);
+    // Left off making the above track both count of message and hour, right now I am just keeping the message content with the time value
+
     // 4. Brainstorm your own interesting statistic(s)!
 }
