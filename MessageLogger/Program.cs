@@ -1,63 +1,70 @@
 ﻿using MessageLogger.Models;
 using MessageLogger.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
+using System.Globalization;
 
 using (var context = new MessageLoggerContext())
 {
     welcomeUser();
-    
+
     User user = createUser(context);
 
     if (!context.Users.Contains(user))
     {
         context.Users.Add(user);
     }
- 
+
     // Telling the user the text commands that allow them to log out or exit
     Console.WriteLine("To log out of your user profile, enter `log out`. \n");
     Console.Write("\n Add a message (or `quit` to exit): ");
 
     // Get user input for next action
-    string userInput = Console.ReadLine();
+    string userInput = Console.ReadLine() ?? "no input";
 
     // Add user to list of users
     List<User> users = new List<User>() { user };
 
     // Loop While the user input is not 'quit'
-    while (userInput.ToLower() != "quit")
+    while (userInput?.ToLower() != "quit")
     { // Loop While the user input is not 'log out' or 'quit'
-        while (userInput.ToLower() != "log out")
+        while (userInput?.ToLower() != "log out")
         {
             // Add the message from user input to message list 
-            Message messageToUse = new Message() { Content = userInput, CreatedAt = DateTime.Now.ToUniversalTime() };
+            Message messageToUse = new Message() { Content = userInput ?? "No input", CreatedAt = DateTime.Now.ToUniversalTime() };
             
-            if(userInput.ToLower() == "quit")
+            if(userInput?.ToLower() == "quit")
             {
                 break;
             }
 
-            user.Messages.Add(messageToUse);
+            user?.Messages.Add(messageToUse);
+
             context.Messages.Add(messageToUse); 
             context.SaveChanges();
 
-            var userIncludingMessages = context.Users.Include(user => user.Messages).Where(cUser => cUser.Id == user.Id).Single();
+            var userIncludingMessages =
+                context.Users.Include(user => user.Messages)
+                             .Where(cUser => cUser.Id == user.Id)
+                             .Single();
 
                 foreach (var currentMessage in userIncludingMessages.Messages)
                 {
-                    Console.WriteLine($"{user.Name} {currentMessage.CreatedAt.ToLocalTime():t}: {currentMessage.Content}");
+                    Console.WriteLine($"{user?.Name} {currentMessage.CreatedAt.ToLocalTime():t}: {currentMessage.Content}");
                 }
                
             Console.Write("Add a message: ");
 
-            userInput = Console.ReadLine();
+            userInput = Console.ReadLine()?? "no input";
             Console.WriteLine();
         }
 
         Console.Write("Would you like to log in a `new` or `existing` user? Or, `quit`? ");
-        userInput = Console.ReadLine();
+        userInput = Console.ReadLine() ?? "new";
 
         // If user wants to make a new profile
-        if (userInput.ToLower() == "new")
+        if (userInput?.ToLower() == "new")
         {
             // Create New user and save to user var
             user = createUser(context);
@@ -70,10 +77,10 @@ using (var context = new MessageLoggerContext())
             Console.Write("Add a message: ");
 
             // Get user input for message
-            userInput = Console.ReadLine();
+            userInput = Console.ReadLine() ?? "no input";
 
         } // Log into existing account
-        else if (userInput.ToLower() == "existing")
+        else if (userInput?.ToLower() == "existing")
         {
             // Ask for username to check against
             Console.Write("What is your username? ");
@@ -93,40 +100,31 @@ using (var context = new MessageLoggerContext())
             if (user != null)
             { // If user is not null (user is found) ask for message input
                 Console.Write("Add a message: ");
-                userInput = Console.ReadLine();
+                userInput = Console.ReadLine() ?? "no input";
             }
             else
             { // If user is not found output "could not find user" and quit program
                 Console.WriteLine("could not find user");
                 userInput = "quit";
-
             }
         }
-
         context.SaveChanges();
     }
     // Output thank you message 
     Console.WriteLine("Thanks for using Message Logger!");
 
-    // PLAN FOR READING USERS
-    // Change forEach loop to use Context.Users instead of users to loop through table of users
-
-    var usersToLoop = context.Users.Include(user => user.Messages);
-    foreach (var u in usersToLoop)
-    { // Loop through users 
-      // Display all messages a user wrote
-        Console.WriteLine($"{u.Name} has written {u.Messages.Count} messages.");
-    }
+    userStats(context, users);
 }
 
 static void welcomeUser()
 {
+
     Console.WriteLine("Welcome to Message Logger!");
 }
 static User createUser(MessageLoggerContext context)
 {
     Console.WriteLine("Would you like to log into an existing user? Y for yes N for no");
-    string userInput = Console.ReadLine();
+    string userInput = Console.ReadLine() ?? "n";
 
     if(userInput.ToLower() == "y")
     {
@@ -145,13 +143,13 @@ static User createUser(MessageLoggerContext context)
     }
     // Asking user for name and saving to var name 
     Console.Write("What is your name? ");
-    string name = Console.ReadLine();
+    string name = Console.ReadLine() ?? "no input";
 
     // Asking user for username and saving to var username 
     Console.Write("What is your username? (one word, no spaces!) ");
-    string username = Console.ReadLine();
+    string username = Console.ReadLine() ?? "no input";
 
-    User user = new User() { Name = name, Username = username };
+    User user = new User() { Name = name ?? "", Username = username };
 
     return user;
 }
